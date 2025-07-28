@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   ollama:
@@ -30,6 +30,27 @@ services:
     depends_on:
       - ollama # Ensures Ollama starts before Open WebUI
     restart: always
+  wildsalfmcp:
+    image: wildsdocker/wildsalfmcp:v1
+    ports:
+      - 8000:8000
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 0G
+        reservations:
+          memory: 0G
+    environment:
+      BASE_URL: "http://alfresco:8080"
+      user: "admin"
+      pass: "admin"
+      FASTMCP_HOST: 0.0.0.0
+  mcpo:
+    image: ghcr.io/open-webui/mcpo:main
+    ports:
+      - 7000:8000
+    command: mcpo --port 7000 --server-type "sse" -- http://127.0.0.1:8000/sse
 
 volumes:
   ollama_data:
