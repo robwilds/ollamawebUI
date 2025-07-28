@@ -32,8 +32,8 @@ services:
     restart: always
   wildsalfmcp:
     image: wildsdocker/wildsalfmcp:v1
-    ports:
-      - 8000:8000
+    #ports:
+    #  - 8000:8000
     deploy:
       resources:
         limits:
@@ -49,9 +49,11 @@ services:
   mcpo:
     image: ghcr.io/open-webui/mcpo:main
     ports:
-      - 7000:8000
-    command: mcpo --port 7000 --server-type "sse" -- http://127.0.0.1:8000/sse
-
+      - 8000:8000
+    command: mcpo --server-type "sse" -- http://wildsalfmcp:8000/sse
+    restart: always
+    depends_on:
+      - wildsalfmcp # Ensures the mcp server starts before mcpo server otherwise it will crash
 volumes:
   ollama_data:
   open_webui_data:
