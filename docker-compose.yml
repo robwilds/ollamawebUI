@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  ollama:
+    container_name: ollama
+    image: ollama/ollama
+    ports:
+      - "11434:11434" # Default Ollama port
+    volumes:
+      - ollama_data:/root/.ollama # Persistent storage for models
+    restart: always
+    # Uncomment and modify if you have a GPU and want to enable GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  open-webui:
+    container_name: open-webui
+    image: ghcr.io/open-webui/open-webui:main # Or :cuda for GPU support
+    ports:
+      - "3000:8080" # Host_port:Container_port
+    volumes:
+      - open_webui_data:/app/backend/data # Persistent storage for Open WebUI data
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434 # Link to the Ollama service
+    depends_on:
+      - ollama # Ensures Ollama starts before Open WebUI
+    restart: always
+
+volumes:
+  ollama_data:
+  open_webui_data:
