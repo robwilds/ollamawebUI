@@ -1,5 +1,4 @@
 version: "3.8"
-
 services:
   ollama:
     container_name: ollama
@@ -7,17 +6,10 @@ services:
     ports:
       - "11434:11434" # Default Ollama port
     volumes:
-      - ollama_data:/root/.ollama # Persistent storage for models
-    restart: always
-    # Uncomment and modify if you have a GPU and want to enable GPU support
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
-
+      - ./ollama/ollama:/root/.ollama
+      - ./entrypoint.sh:/entrypoint.sh
+    restart: unless-stopped
+    entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
   open-webui:
     container_name: open-webui
     image: ghcr.io/open-webui/open-webui:main # Or :cuda for GPU support
@@ -30,6 +22,14 @@ services:
     depends_on:
       - ollama # Ensures Ollama starts before Open WebUI
     restart: always
+  mcpo:
+    image: ghcr.io/open-webui/mcpo:main
+    ports:
+      - 8000:8000
+    command: mcpo --server-type "sse" -- http://wildsalfmcp:8000/sse
+    restart: always
+    depends_on:
+      - wildsalfmcp # Ensures the mcp server starts before mcpo server otherwise it will crash
   wildsalfmcp:
     image: wildsdocker/wildsalfmcp:v1
     #ports:
@@ -42,18 +42,11 @@ services:
         reservations:
           memory: 0G
     environment:
-      BASE_URL: "http://alfresco:8080"
+      BASE_URL: "http://localhost:8080"
       user: "admin"
       pass: "admin"
       FASTMCP_HOST: 0.0.0.0
-  mcpo:
-    image: ghcr.io/open-webui/mcpo:main
-    ports:
-      - 8000:8000
-    command: mcpo --server-type "sse" -- http://wildsalfmcp:8000/sse
-    restart: always
-    depends_on:
-      - wildsalfmcp # Ensures the mcp server starts before mcpo server otherwise it will crash
+
 volumes:
   ollama_data:
   open_webui_data:
