@@ -1,48 +1,42 @@
 version: "3.8"
 services:
-  ollama:
-    container_name: ollama
-    image: ollama/ollama
-    ports:
-      - "11434:11434" # Default Ollama port
-    volumes:
-      - ./ollama/ollama:/root/.ollama
-      - ./entrypoint.sh:/entrypoint.sh
-    restart: unless-stopped
-    entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
+  # ollama:
+  #   container_name: ollama
+  #   image: ollama/ollama
+  #   ports:
+  #     - "11434:11434" # Default Ollama port
+  #   volumes:
+  #     - ./ollama/ollama:/root/.ollama
+  #     - ./entrypoint.sh:/entrypoint.sh
+  #   restart: unless-stopped
+  #   entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
   open-webui:
     container_name: open-webui
     image: ghcr.io/open-webui/open-webui:main # Or :cuda for GPU support
     ports:
       - "3000:8080" # Host_port:Container_port
     volumes:
-      - open_webui_data:/app/backend/data # Persistent storage for Open WebUI data
+      - ./data/services/openwebui:/app/backend/data # Persistent storage for Open WebUI data
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434 # Link to the Ollama service
-    depends_on:
-      - ollama # Ensures Ollama starts before Open WebUI
-    restart: always
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434 # Link to the Ollama service
+    # depends_on:
+    #   - ollama # Ensures Ollama starts before Open WebUI
+    restart: unless-stopped
   mcpo:
     image: ghcr.io/open-webui/mcpo:main
+    container_name: mcpo
     ports:
-      - 8000:8000
+      - 8001:8000
     command: mcpo --server-type "sse" -- http://wildsalfmcp:8000/sse
-    restart: always
+    restart: unless-stopped
     depends_on:
       - wildsalfmcp # Ensures the mcp server starts before mcpo server otherwise it will crash
   wildsalfmcp:
     image: wildsdocker/wildsalfmcp:v1
-    #ports:
-    #  - 8000:8000
-    deploy:
-      resources:
-        limits:
-          cpus: "1"
-          memory: 0G
-        reservations:
-          memory: 0G
+    ports:
+      - 8000:8000
     environment:
-      BASE_URL: "http://localhost:8080"
+      BASE_URL: "http://alfresco:8080"
       user: "admin"
       pass: "admin"
       FASTMCP_HOST: 0.0.0.0
